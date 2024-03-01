@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tetris</title>
+</head>
+<style>
+    body{
+        background-color: darkseagreen;
+    }
+    #cumtainer{
+        margin: auto;
+        width: 826px;
+        gap: 10px;
+        display: flex;
+    }
+    #game{
+        width: 576px;
+        height: 864px;
+        padding: 10px;
+        background-color: white;
+        border: 1px solid black;
+        line-height: 0;
+    }
+    #stats{
+        width: 154px;
+        height: 864px;
+        padding: 10px;
+        background-color: white;
+        border: 1px solid black;
+        display: inline-block;
+        vertical-align: top;
+        text-align: center;
+    }
+    #stats img{
+        font-size: 0;
+    }
+    #stats p{
+        font-size: 16pt;
+        font-weight: bold;
+        margin: 5px;
+    }
+    #pont{
+        font-size: 32pt;
+        font-weight: bold;
+        color: blue;
+    }
+    #next{
+        font-size: 0pt;
+    }
+    #stats input{
+        width: 100px;
+        height: 40px;
+    }
+    #letol{
+        height: 520px;
+    }
+</style>
+<script>
+
+    let t = []
+
+    function start() {
+        let html = ""
+        for(let i = 0; i < 18; i++) t.push([])
+        for(let y = 0; y < 18; y++){
+            for(let x = 0; x < 12; x++){
+                if(y == 0 || y == 17 || x == 0 ||x == 11){
+                    t[y][x]="icons/side.png"
+                    html += "<img src='"+t[y][x]+"'>"
+                }    
+                else{
+                    t[y][x]="icons/null.png"
+                    html += "<img id='"+y+","+x+"' src='"+t[y][x]+"'>"
+                }
+            }
+        }
+        document.getElementById("game").innerHTML = html
+        kezd();
+    }
+
+    let block = null
+
+    function kezd() {
+        for(let y = 0; y < 18; y++){
+            for(let x = 0; x < 12; x++){
+                if(y == 0 || y == 17 || x == 0 ||x == 11){
+                    t[y][x]="icons/side.png"
+                }    
+                else{
+                    t[y][x]="icons/null.png"
+                    document.getElementById(y+","+x).src = "icons/null.png"
+                }
+            }
+        }
+
+        block = new Piece(getPiece(getColor()))
+        setInterval(play,500)
+    }
+    
+    function play() {
+        if(block.state == true){
+            block = new Piece(getPiece(getColor()))
+        }
+        block.down();
+    }
+
+    function readKeyboard() {
+        let k = event.key
+        if(k == "s") block.down();
+        if(k == "a") block.moveLeft();
+        if(k == "d") block.moveRight();
+        if(k == "w") block.rotate();
+    }
+
+    class Piece{
+        gridX = [[4,5,6],[4,5,6],[4,5,6]]
+        gridY = [[1,1,1],[2,2,2],[3,3,3]]
+        gridPiece = [["null.png","null.png","null.png"],["null.png","null.png","null.png"],["null.png","null.png","null.png"]]
+        state = false
+
+        constructor(piece){
+            this.gridPiece = piece
+            this.draw()
+        }
+
+        moveLeft(){
+            if(this.state) return
+            else{
+                if(this.collide("left")) return
+                this.clear_()
+                for(let i = 0; i < 3; i++){
+                    for(let b = 0; b < 3; b++){
+                        this.gridX[i][b]--;
+                    }
+                }
+                this.draw()
+            }
+        }
+
+        moveRight(){
+            if(this.state) return
+            else{
+                if(this.collide("right")) return
+                this.clear_()
+                for(let i = 0; i < 3; i++){
+                    for(let b = 0; b < 3; b++){
+                        this.gridX[i][b]++;
+                    }
+                }
+                this.draw()
+            }
+        }
+
+        collide(type){
+            let down1 = "NONE";
+            let down2 = "NONE";
+            let down3 = "NONE";
+            if(type == "down"){
+                for(let i = 0; i < 3; i++){
+                    for(let b = 0; b < 3; b++){
+                        if(this.gridPiece[i][b] != "icons/null.png"){
+                            if(i == 0) down1 = this.gridY[0][i]
+                            else if(i == 1) down2 = this.gridY[1][i]
+                            else down3 = this.gridY[2][i];
+                            console.log("kuki")
+                        }
+                    }
+                }
+                console.log("fallosz")
+                if(down1 != "NONE" && t[down1+1][this.gridX[0]] != "icons/null.png") {
+                    console.log("fasz")
+                    this.state = true
+                }
+                else if(down2 != "NONE" && t[down1+1][this.gridX[1]] != "icons/null.png") {
+                    this.state = true
+                }
+                else if(down3 != "NONE" && t[down1+1][this.gridX[2]] != "icons/null.png") {
+                    this.state = true
+                }
+
+            }else if(type == "left"){
+                for(let i = 0; i < 3; i++){
+                    for(let b = 2; b > -1; b--){
+                        if(this.gridPiece[i][b] != "icons/null.png"){
+                            if(i == 0) down1 = i
+                            else if(i == 1) down2 = i
+                            else down3 = i;
+                        }
+                    }
+                }
+                
+                if(down1 != "NONE") if(t[0][down1-1] != "icons/null.png") {
+                    return true
+                }
+                else if(down2 != "NONE") if(t[1][down2-1] != "icons/null.png") {
+                    return true
+                }
+                else if(down3 != "NONE") if(t[2][down3-1] != "icons/null.png") {
+                    return true
+                }
+
+            }else if(type == "right"){
+                for(let i = 0; i < 3; i++){
+                    for(let b = 0; b < 3; b++){
+                        if(this.gridPiece[i][b] != "icons/null.png"){
+                            if(i == 0) down1 = i
+                            else if(i == 1) down2 = i
+                            else down3 = i;
+                        }
+                    }
+                }
+                if(down1 != "NONE") if(t[0][down1+1] != "icons/null.png") {
+                    return true
+                }
+                else if(down2 != "NONE") if(t[1][down2+1] != "icons/null.png") {
+                    return true
+                }
+                else if(down3 != "NONE") if(t[2][down3+1] != "icons/null.png") {
+                    return true
+                }
+
+            }
+        }
+
+        draw(){
+            for(let i = 0; i < 3; i++){
+                for(let b = 0; b < 3; b++){
+                    document.getElementById(this.gridY[i][b]+","+this.gridX[i][b]).src = this.gridPiece[i][b]
+                    t[this.gridY[i][b]][this.gridX[i][b]] = this.gridPiece[i][b]
+                }
+            }
+            this.collide("down")
+        }
+
+        clear_(){
+            for(let i = 0; i < 3; i++){
+                for(let b = 0; b < 3; b++){
+                    document.getElementById(this.gridY[i][b]+","+this.gridX[i][b]).src = "icons/null.png"
+                    t[this.gridY[i][b]][this.gridX[i][b]] = "icons/null.png"
+                }
+            }
+        }
+
+        down(){
+            if(this.state) return
+            else{
+                this.clear_()
+                for(let i = 0; i < 3; i++){
+                    for(let b = 0; b < 3; b++){
+                        this.gridY[i][b]++;
+                    }
+                }
+                this.draw()
+            }
+        }
+
+        rotate(){
+            if(this.state) return
+            else{
+                this.clear_()
+                for(let i = 0; i < 2; i++){
+                    const val1 = this.gridPiece[0].pop()
+                    const val2 = this.gridPiece[2].shift()
+                    const val3 = this.gridPiece[1].pop()
+                    const val4 = this.gridPiece[1].shift()
+                    this.gridPiece[0].unshift(val4)
+                    this.gridPiece[1].push(val1)
+                    this.gridPiece[1].unshift(val2)
+                    this.gridPiece[2].push(val3)
+                }
+                this.draw()
+            }
+        }
+    }
+
+    function setKep(y, x, kep) {
+        document.getElementById(y+","+x).src = kep    
+    }
+
+    function getPiece(color) {
+        let gridPiece = [["icons/null.png","icons/null.png","icons/null.png"],["icons/null.png","icons/null.png","icons/null.png"],["icons/null.png","icons/null.png","icons/null.png"]]
+        let character = ["T","L","S","Z","J","I"][Math.floor(Math.random()*6)]
+        if(character == "T"){
+            gridPiece[1][0]=color
+            gridPiece[1][1]=color
+            gridPiece[1][2]=color
+            gridPiece[2][1]=color
+        }else if(character == "L"){
+            gridPiece[0][1]=color
+            gridPiece[1][1]=color
+            gridPiece[2][1]=color
+            gridPiece[2][2]=color
+        }else if(character == "S"){
+            gridPiece[1][0]=color
+            gridPiece[1][1]=color
+            gridPiece[2][1]=color
+            gridPiece[2][2]=color
+        }else if(character == "Z"){
+            gridPiece[1][2]=color
+            gridPiece[1][1]=color
+            gridPiece[2][1]=color
+            gridPiece[2][0]=color
+        }else if(character == "J"){
+            gridPiece[0][1]=color
+            gridPiece[1][1]=color
+            gridPiece[2][1]=color
+            gridPiece[2][0]=color
+        }else{
+            //I
+            gridPiece[0][1]=color
+            gridPiece[1][1]=color
+            gridPiece[2][1]=color
+        }
+        document.getElementById("0n0").src = gridPiece[0][0]
+        document.getElementById("0n1").src = gridPiece[0][1]
+        document.getElementById("0n2").src = gridPiece[0][2]
+        document.getElementById("1n0").src = gridPiece[1][0]
+        document.getElementById("1n1").src = gridPiece[1][1]
+        document.getElementById("1n2").src = gridPiece[1][2]
+        document.getElementById("2n0").src = gridPiece[2][0]
+        document.getElementById("2n1").src = gridPiece[2][1]
+        document.getElementById("2n2").src = gridPiece[2][2]
+        return gridPiece;
+    }
+
+    function getColor() {
+        return ["icons/boxB.png","icons/boxC.png","icons/boxG.png","icons/boxP.png","icons/boxR.png","icons/boxY.png"][Math.floor(Math.random()*6)]
+    }
+
+</script>
+<body onload="start()" onkeydown="readKeyboard()">
+    
+    <div id="cumtainer">
+        <div id="game">
+
+        </div>
+        <div id="stats">
+            <p>Pontszám:</p>
+            <p><span id="pont">0</span></p>
+            <p>Következő:</p><br>
+            <span id="next">
+                <img src="icons/next.png"id="0n0">
+                <img src="icons/next.png"id="0n1">
+                <img src="icons/next.png"id="0n2">
+                <img src="icons/next.png"id="1n0">
+                <img src="icons/next.png"id="1n1">
+                <img src="icons/next.png"id="1n2">
+                <img src="icons/next.png"id="2n0">
+                <img src="icons/next.png"id="2n1">
+                <img src="icons/next.png"id="2n2">
+            </span>
+            <p id="letol"></p>
+            <input onclick="kezd()" type="button" value="Újrakezd">    
+        </div>
+    </div>
+
+</body>
+</html>
